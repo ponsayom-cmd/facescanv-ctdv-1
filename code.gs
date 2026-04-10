@@ -1,119 +1,116 @@
 /**
- * Smart School AI System - Backend Logic V4.0
- * ระบบนี้จะเชื่อมต่อกับ Google Sheets ที่สคริปต์นี้ฝังตัวอยู่โดยอัตโนมัติ
+ * Smart School AI System - Backend Logic V4.3
+ * ระบบบันทึกเวลาเรียนและระบบจัดการ Cloud
  */
 
-// ฟังก์ชันหลักในการเปิดใช้งาน Web App
 function doGet() {
   return HtmlService.createTemplateFromFile('index')
     .evaluate()
     .setTitle('Smart School AI System')
-    .addMetaTag('viewport', 'width=device-width, initial-scale=1')
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1.0')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
-/** * ฟังก์ชันสำหรับบันทึกนักเรียนพร้อมรูปภาพใบหน้า 3 มุม 
- * @param {Object} studentData ข้อมูลนักเรียนที่ส่งมาจากหน้าบ้าน
- */
+function getTargetSpreadsheet() {
+  const props = PropertiesService.getScriptProperties();
+  const ssId = props.getProperty('SS_ID');
+  try {
+    if (ssId) return SpreadsheetApp.openById(ssId);
+  } catch (e) { console.error("SS ID Error: " + e.message); }
+  return SpreadsheetApp.getActiveSpreadsheet();
+}
+
+function saveSettings(id, url) {
+  try {
+    const props = PropertiesService.getScriptProperties();
+    props.setProperty('SS_ID', id);
+    props.setProperty('SCRIPT_URL', url);
+    const ss = SpreadsheetApp.openById(id);
+    return { success: true, name: ss.getName() };
+  } catch (e) { return { success: false, message: e.toString() }; }
+}
+
+function getSettings() {
+  const props = PropertiesService.getScriptProperties();
+  return {
+    ssId: props.getProperty('SS_ID') || "",
+    scriptUrl: props.getProperty('SCRIPT_URL') || ""
+  };
+}
+
+/** ฟังก์ชันบันทึกเวลาเรียน */
+function checkInStudent(studentId, studentName) {
+  try {
+    const ss = getTargetSpreadsheet();
+    let sheet = ss.getSheetByName('Attendance');
+    if (!sheet) {
+      sheet = ss.insertSheet('Attendance');
+      sheet.appendRow(['StudentID', 'Name', 'Timestamp', 'Status']);
+    }
+    sheet.appendRow([studentId, studentName, new Date(), 'Checked-In']);
+    return { success: true };
+  } catch (e) { return { success: false, message: e.toString() }; }
+}
+
 function registerStudent(studentData) {
   try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const ss = getTargetSpreadsheet();
     let sheet = ss.getSheetByName('Students');
-    
-    // หากไม่มี Sheet ให้สร้างขึ้นใหม่พร้อมหัวตาราง
     if (!sheet) {
       sheet = ss.insertSheet('Students');
       sheet.appendRow(['StudentID', 'FullName', 'Room', 'FaceFront', 'FaceLeft', 'FaceRight', 'Timestamp']);
     }
-    
     sheet.appendRow([
-      studentData.id,
-      studentData.name,
-      studentData.room,
-      studentData.faces.front, // เก็บเป็น Base64 String
-      studentData.faces.left,
-      studentData.faces.right,
+      studentData.id, studentData.name, studentData.room,
+      studentData.faces.front, studentData.faces.left, studentData.faces.right,
       new Date()
     ]);
-    
-    return { success: true, message: "บันทึกข้อมูลนักเรียนสำเร็จ" };
-  } catch (error) {
-    return { success: false, message: error.toString() };
-  }
+    return { success: true };
+  } catch (e) { return { success: false, message: e.toString() }; }
 }
 
-/** ฟังก์ชันเพิ่มวิชาเรียน */
 function addSubject(subjectData) {
   try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const ss = getTargetSpreadsheet();
     let sheet = ss.getSheetByName('Subjects');
-    
     if (!sheet) {
       sheet = ss.insertSheet('Subjects');
       sheet.appendRow(['SubjectID', 'SubjectName', 'CreatedAt']);
     }
-    
     sheet.appendRow([subjectData.id, subjectData.name, new Date()]);
     return { success: true };
-  } catch (error) {
-    return { success: false, message: error.toString() };
-  }
+  } catch (e) { return { success: false, message: e.toString() }; }
 }
 
-/** ดึงข้อมูลนักเรียนทั้งหมดจาก Sheet */
 function getStudents() {
   try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const ss = getTargetSpreadsheet();
     const sheet = ss.getSheetByName('Students');
     if (!sheet) return [];
-    
     const values = sheet.getDataRange().getValues();
-    if (values.length <= 1) return []; // มีแต่หัวตาราง
-    
-    values.shift(); // ลบหัวตารางออก
-    return values.map(row => ({
-      StudentID: row[0],
-      FullName: row[1],
-      Room: row[2]
-    }));
-  } catch (error) {
-    return [];
-  }
+    values.shift();
+    return values.map(row => ({ StudentID: row[0], FullName: row[1], Room: row[2] }));
+  } catch (e) { return []; }
 }
 
-/** ดึงข้อมูลรายวิชาทั้งหมด */
 function getSubjects() {
   try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const ss = getTargetSpreadsheet();
     const sheet = ss.getSheetByName('Subjects');
     if (!sheet) return [];
-    
     const values = sheet.getDataRange().getValues();
-    if (values.length <= 1) return [];
-    
     values.shift();
-    return values.map(row => ({
-      id: row[0],
-      name: row[1]
-    }));
-  } catch (error) {
-    return [];
-  }
+    return values.map(row => ({ id: row[0], name: row[1] }));
+  } catch (e) { return []; }
 }
 
-/** ระบบ Admin: ล้างข้อมูลใน Sheet (เฉพาะข้อมูล ไม่ลบหัวตาราง) */
 function clearDatabase(type) {
   try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const ss = getTargetSpreadsheet();
     const sheet = ss.getSheetByName(type);
-    if (sheet) {
-      const lastRow = sheet.getLastRow();
-      if (lastRow > 1) {
-        sheet.deleteRows(2, lastRow - 1);
-      }
+    if (sheet && sheet.getLastRow() > 1) {
+      sheet.deleteRows(2, sheet.getLastRow() - 1);
     }
     return { success: true };
-  } catch (error) {
-    return { success: false, message: error.toString() };
-  }
+  } catch (e) { return { success: false }; }
 }
