@@ -1,6 +1,6 @@
 /**
- * Smart School AI System - Backend Logic V4.3
- * ระบบบันทึกเวลาเรียนและระบบจัดการ Cloud
+ * Smart School AI System - Backend Logic V4.4
+ * ระบบบันทึกเวลาเรียนและระบบจัดการ Cloud (เพิ่มระบบตรวจสอบ Error)
  */
 
 function doGet() {
@@ -11,23 +11,39 @@ function doGet() {
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
+/** * ตรวจสอบและดึง Spreadsheet
+ * หากบันทึกไม่ได้ ให้ตรวจสอบว่าได้กด "Authorize" สิทธิ์การเข้าถึง Spreadsheet หรือยัง
+ */
 function getTargetSpreadsheet() {
   const props = PropertiesService.getScriptProperties();
   const ssId = props.getProperty('SS_ID');
+  
+  if (!ssId) {
+    console.warn("ไม่ได้ระบุ Spreadsheet ID ในระบบ Admin");
+    return SpreadsheetApp.getActiveSpreadsheet();
+  }
+
   try {
-    if (ssId) return SpreadsheetApp.openById(ssId);
-  } catch (e) { console.error("SS ID Error: " + e.message); }
-  return SpreadsheetApp.getActiveSpreadsheet();
+    return SpreadsheetApp.openById(ssId);
+  } catch (e) {
+    console.error("ไม่สามารถเปิด Spreadsheet ตาม ID ที่ระบุได้: " + e.message);
+    // กรณี ID ผิดหรือไม่มีสิทธิ์ จะใช้ไฟล์ที่สคริปต์นี้ฝังตัวอยู่แทน
+    return SpreadsheetApp.getActiveSpreadsheet();
+  }
 }
 
 function saveSettings(id, url) {
   try {
     const props = PropertiesService.getScriptProperties();
-    props.setProperty('SS_ID', id);
-    props.setProperty('SCRIPT_URL', url);
-    const ss = SpreadsheetApp.openById(id);
+    props.setProperty('SS_ID', id.trim());
+    props.setProperty('SCRIPT_URL', url.trim());
+    
+    // ทดสอบเปิดไฟล์หลังจากบันทึก
+    const ss = SpreadsheetApp.openById(id.trim());
     return { success: true, name: ss.getName() };
-  } catch (e) { return { success: false, message: e.toString() }; }
+  } catch (e) {
+    return { success: false, message: "ID ไม่ถูกต้อง หรือยังไม่ได้กดอนุญาตสิทธิ์: " + e.toString() };
+  }
 }
 
 function getSettings() {
@@ -48,10 +64,15 @@ function checkInStudent(studentId, studentName) {
       sheet.appendRow(['StudentID', 'Name', 'Timestamp', 'Status']);
     }
     sheet.appendRow([studentId, studentName, new Date(), 'Checked-In']);
+    SpreadsheetApp.flush(); // บังคับให้เขียนข้อมูลลง Sheet ทันที
     return { success: true };
-  } catch (e) { return { success: false, message: e.toString() }; }
+  } catch (e) {
+    console.error("Error in checkInStudent: " + e.toString());
+    return { success: false, message: e.toString() };
+  }
 }
 
+/** บันทึกข้อมูลนักเรียนใหม่ */
 function registerStudent(studentData) {
   try {
     const ss = getTargetSpreadsheet();
@@ -65,8 +86,12 @@ function registerStudent(studentData) {
       studentData.faces.front, studentData.faces.left, studentData.faces.right,
       new Date()
     ]);
+    SpreadsheetApp.flush();
     return { success: true };
-  } catch (e) { return { success: false, message: e.toString() }; }
+  } catch (e) {
+    console.error("Error in registerStudent: " + e.toString());
+    return { success: false, message: e.toString() };
+  }
 }
 
 function addSubject(subjectData) {
@@ -78,8 +103,11 @@ function addSubject(subjectData) {
       sheet.appendRow(['SubjectID', 'SubjectName', 'CreatedAt']);
     }
     sheet.appendRow([subjectData.id, subjectData.name, new Date()]);
+    SpreadsheetApp.flush();
     return { success: true };
-  } catch (e) { return { success: false, message: e.toString() }; }
+  } catch (e) {
+    return { success: false, message: e.toString() };
+  }
 }
 
 function getStudents() {
@@ -88,9 +116,13 @@ function getStudents() {
     const sheet = ss.getSheetByName('Students');
     if (!sheet) return [];
     const values = sheet.getDataRange().getValues();
+    if (values.length <= 1) return [];
     values.shift();
     return values.map(row => ({ StudentID: row[0], FullName: row[1], Room: row[2] }));
-  } catch (e) { return []; }
+  } catch (e) { 
+    console.error("Error getStudents: " + e.toString());
+    return []; 
+  }
 }
 
 function getSubjects() {
@@ -99,6 +131,7 @@ function getSubjects() {
     const sheet = ss.getSheetByName('Subjects');
     if (!sheet) return [];
     const values = sheet.getDataRange().getValues();
+    if (values.length <= 1) return [];
     values.shift();
     return values.map(row => ({ id: row[0], name: row[1] }));
   } catch (e) { return []; }
@@ -112,5 +145,5 @@ function clearDatabase(type) {
       sheet.deleteRows(2, sheet.getLastRow() - 1);
     }
     return { success: true };
-  } catch (e) { return { success: false }; }
+  } catch (e) { return { success: false, message: e.toString() }; }
 }
