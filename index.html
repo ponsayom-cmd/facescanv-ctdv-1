@@ -77,7 +77,7 @@
         </div>
     </main>
 
-    <!-- Modal: Add Student -->
+    <!-- Modals (Student, Subject) -->
     <div id="modal-student" class="modal">
         <div class="bg-white w-full max-w-5xl rounded-[3rem] shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[90vh]">
             <div class="md:w-1/3 p-10 space-y-6 bg-slate-50 overflow-y-auto">
@@ -107,7 +107,6 @@
         </div>
     </div>
 
-    <!-- Modal: Add Subject -->
     <div id="modal-subject" class="modal">
         <div class="bg-white w-full max-w-md rounded-[2.5rem] p-10 shadow-2xl">
             <h3 class="text-xl font-black italic uppercase mb-6 text-slate-800">Add Subject</h3>
@@ -128,6 +127,7 @@
         let currentStudents = [];
         let currentSubjects = [];
         let config = { ssId: "", scriptUrl: "" };
+        let isConnected = false;
         let captureStep = 0;
         let capturedImages = [null, null, null];
         let stream = null;
@@ -151,35 +151,46 @@
             if (typeof google !== 'undefined') {
                 google.script.run.withSuccessHandler(res => {
                     config = res;
-                    const dot = document.getElementById('status-dot');
-                    const text = document.getElementById('status-text');
-                    if (res.ssId && res.scriptUrl) {
-                        text.innerText = "System Fully Linked";
-                        dot.className = "w-2 h-2 rounded-full bg-emerald-500 animate-pulse";
-                    } else {
-                        text.innerText = "Check Cloud Config";
-                        dot.className = "w-2 h-2 rounded-full bg-rose-500 animate-pulse";
-                    }
+                    checkConnection();
                     refreshData();
                 }).getSettings();
             }
         }
 
+        function checkConnection() {
+            const dot = document.getElementById('status-dot');
+            const text = document.getElementById('status-text');
+            if (typeof google !== 'undefined') {
+                google.script.run.withSuccessHandler(res => {
+                    if (res) {
+                        isConnected = true;
+                        text.innerText = "System Connected";
+                        dot.className = "w-2 h-2 rounded-full bg-emerald-500";
+                    } else {
+                        isConnected = false;
+                        text.innerText = "Connection Failed";
+                        dot.className = "w-2 h-2 rounded-full bg-rose-500";
+                    }
+                    if (document.getElementById('admin-status-area')) renderAdminStatus();
+                }).getSettings(); // Re-fetch to ping
+            }
+        }
+
         async function refreshData() {
             const icon = document.getElementById('refresh-icon');
-            icon.classList.add('fa-spin');
+            if (icon) icon.classList.add('fa-spin');
             if (typeof google !== 'undefined') {
                 google.script.run.withSuccessHandler(data => {
                     currentStudents = data || [];
                     updateUI();
-                    icon.classList.remove('fa-spin');
+                    if (icon) icon.classList.remove('fa-spin');
                 }).getStudents();
                 google.script.run.withSuccessHandler(data => {
                     currentSubjects = data || [];
                     updateUI();
                 }).getSubjects();
             } else {
-                setTimeout(() => icon.classList.remove('fa-spin'), 1000);
+                setTimeout(() => { if (icon) icon.classList.remove('fa-spin') }, 1000);
             }
         }
 
@@ -270,17 +281,13 @@
 
                         <div class="w-full aspect-video bg-slate-900 rounded-[3rem] border-[12px] border-white shadow-2xl relative overflow-hidden group">
                             <video id="scan-video" autoPlay playsInline muted class="w-full h-full object-cover video-flip"></video>
-                            
-                            <!-- AI Overlay Layer -->
                             <div id="ai-overlay" class="absolute inset-0 pointer-events-none flex items-center justify-center">
-                                <!-- Example Frame (Hidden by default) -->
                                 <div id="face-box" class="hidden absolute border-4 border-blue-500 rounded-2xl scanning-frame transition-all duration-300">
                                     <div class="absolute -top-12 left-0 bg-blue-600 text-white px-4 py-1.5 rounded-xl text-xs font-black uppercase whitespace-nowrap shadow-xl">
                                         <span id="detected-name">Identifying...</span>
                                     </div>
                                 </div>
                             </div>
-
                             <div id="camera-placeholder" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 text-slate-700">
                                 <i class="fas fa-camera-retro text-7xl mb-4"></i>
                                 <span class="font-black uppercase text-xs tracking-[0.3em]">Standby</span>
@@ -296,8 +303,14 @@
             } else if (page === 'settings') {
                 area.innerHTML = `
                     <div class="max-w-3xl space-y-6">
+                        <!-- Connection Status Alert -->
+                        <div id="admin-status-area" class="mb-4"></div>
+
                         <div class="bg-white p-10 rounded-[2.5rem] border border-slate-200 shadow-sm">
-                            <h3 class="font-black uppercase italic mb-8 flex items-center gap-3"><i class="fas fa-cogs text-blue-500"></i> Cloud Infrastructure</h3>
+                            <h3 class="font-black uppercase italic mb-8 flex items-center justify-between">
+                                <span class="flex items-center gap-3"><i class="fas fa-cogs text-blue-500"></i> Cloud Infrastructure</span>
+                                <button onclick="checkConnection()" class="text-[9px] bg-slate-100 px-3 py-1 rounded-full text-slate-500 hover:bg-slate-200 active:scale-95 transition-all">Test Connection</button>
+                            </h3>
                             <div class="space-y-6">
                                 <div class="space-y-2">
                                     <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">1. Google Spreadsheet ID</p>
@@ -307,7 +320,7 @@
                                     <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">2. Google Apps Script URL</p>
                                     <input type="text" id="input-scripturl" value="${config.scriptUrl}" placeholder="วาง Web App URL ของคุณ" class="w-full bg-slate-100 p-4 rounded-xl outline-none font-bold text-sm focus:bg-white focus:ring-2 focus:ring-blue-100">
                                 </div>
-                                <button onclick="updateSettings()" class="bg-blue-600 text-white w-full py-4 rounded-xl font-black uppercase text-xs shadow-lg shadow-blue-500/20 active:scale-95 transition-all">Save Cloud Configuration</button>
+                                <button onclick="updateSettings()" class="bg-blue-600 text-white w-full py-4 rounded-xl font-black uppercase text-xs shadow-lg shadow-blue-500/20 active:scale-95 transition-all">Save & Link Database</button>
                             </div>
                         </div>
                         <div class="bg-white p-10 rounded-[2.5rem] border border-slate-200 shadow-sm">
@@ -317,6 +330,37 @@
                                 <button onclick="clearSheet('Subjects')" class="bg-rose-50 text-rose-500 p-4 rounded-2xl font-black uppercase text-[10px] hover:bg-rose-500 hover:text-white transition-all">Wipe Subjects</button>
                                 <button onclick="clearSheet('Attendance')" class="bg-rose-50 text-rose-500 p-4 rounded-2xl font-black uppercase text-[10px] hover:bg-rose-500 hover:text-white transition-all">Wipe History</button>
                             </div>
+                        </div>
+                    </div>
+                `;
+                renderAdminStatus();
+            }
+        }
+
+        function renderAdminStatus() {
+            const area = document.getElementById('admin-status-area');
+            if (!area) return;
+            if (isConnected) {
+                area.innerHTML = `
+                    <div class="bg-emerald-50 border-2 border-emerald-100 p-6 rounded-[2rem] flex items-center gap-4">
+                        <div class="bg-emerald-500 text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                            <i class="fas fa-check-circle text-xl"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-black uppercase text-emerald-800 text-sm italic">Database Connected</h4>
+                            <p class="text-[10px] text-emerald-600 font-bold uppercase tracking-widest">ระบบสื่อสารกับ Google Sheet ได้ปกติ</p>
+                        </div>
+                    </div>
+                `;
+            } else {
+                area.innerHTML = `
+                    <div class="bg-rose-50 border-2 border-rose-100 p-6 rounded-[2rem] flex items-center gap-4">
+                        <div class="bg-rose-500 text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg shadow-rose-500/20">
+                            <i class="fas fa-times-circle text-xl"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-black uppercase text-rose-800 text-sm italic">Connection Failed</h4>
+                            <p class="text-[10px] text-rose-600 font-bold uppercase tracking-widest">ไม่สามารถเชื่อมต่อฐานข้อมูลได้ โปรดตรวจสอบ ID</p>
                         </div>
                     </div>
                 `;
@@ -333,12 +377,19 @@
             const url = document.getElementById('input-scripturl').value;
             if (!id || !url) return alert("กรุณาระบุข้อมูลให้ครบถ้วน");
             notify("Connecting to Cloud...");
-            google.script.run.withSuccessHandler(res => {
-                if (res.success) { notify("Cloud Linked!"); loadSettings(); } else { notify(res.message, "error"); }
-            }).saveSettings(id, url);
+            if (typeof google !== 'undefined') {
+                google.script.run.withSuccessHandler(res => {
+                    if (res.success) { 
+                        notify("Cloud Linked Successfully!"); 
+                        loadSettings(); 
+                    } else { 
+                        notify(res.message, "error"); 
+                    }
+                }).saveSettings(id, url);
+            }
         }
 
-        // AI Scan & Face Recognition Logic (Simulation)
+        // Face Logic Simulation (Keep same as before)
         async function startScan() {
             const video = document.getElementById('scan-video');
             const placeholder = document.getElementById('camera-placeholder');
@@ -350,7 +401,7 @@
                 document.getElementById('btn-scan-stop').classList.remove('hidden');
                 document.getElementById('scan-status').innerText = "Camera: Active / AI Running";
                 isScanning = true;
-                simulationAI(); // เริ่มตัวจำลอง AI
+                simulationAI();
             } catch (err) { alert("Camera Error: " + err); }
         }
 
@@ -359,15 +410,10 @@
             const video = document.getElementById('scan-video');
             if (stream) stream.getTracks().forEach(t => t.stop());
             if (video) video.srcObject = null;
-            const placeholder = document.getElementById('camera-placeholder');
-            if (placeholder) placeholder.classList.remove('hidden');
-            const box = document.getElementById('face-box');
-            if (box) box.classList.add('hidden');
-            
-            const btnStart = document.getElementById('btn-scan-start');
-            const btnStop = document.getElementById('btn-scan-stop');
-            if (btnStart) btnStart.classList.remove('hidden');
-            if (btnStop) btnStop.classList.add('hidden');
+            if (document.getElementById('camera-placeholder')) document.getElementById('camera-placeholder').classList.remove('hidden');
+            if (document.getElementById('face-box')) document.getElementById('face-box').classList.add('hidden');
+            if (document.getElementById('btn-scan-start')) document.getElementById('btn-scan-start').classList.remove('hidden');
+            if (document.getElementById('btn-scan-stop')) document.getElementById('btn-scan-stop').classList.add('hidden');
         }
 
         function toggleAutoCheckIn() {
@@ -385,23 +431,16 @@
             }
         }
 
-        // จำลองการทำงานของ AI เมื่อตรวจจับใบหน้า
         function simulationAI() {
             if (!isScanning) return;
-            
-            // สุ่มเวลาตรวจเจอใบหน้า (จำลอง)
             setTimeout(() => {
                 if (!isScanning) return;
-                
-                // สุ่มนักเรียนจากข้อมูลที่มี
                 if (currentStudents.length > 0) {
                     const randomStd = currentStudents[Math.floor(Math.random() * currentStudents.length)];
                     showFaceDetection(randomStd);
                 } else {
                     showFaceDetection({ FullName: "Unknown User", StudentID: "????" });
                 }
-
-                // รันต่อเรื่อยๆ (จำลอง Loop)
                 setTimeout(simulationAI, 4000);
             }, 3000);
         }
@@ -409,26 +448,20 @@
         function showFaceDetection(student) {
             const box = document.getElementById('face-box');
             const nameLabel = document.getElementById('detected-name');
-            
-            // แสดงกรอบสแกน
+            if (!box) return;
             box.classList.remove('hidden');
             box.style.width = "200px";
             box.style.height = "240px";
             nameLabel.innerText = student.FullName;
-
-            // หากเปิด Auto Check-in และมีข้อมูลจริง
             if (isAutoCheckIn && student.StudentID !== "????") {
                 notify(`Checking-in: ${student.FullName}`);
                 if (typeof google !== 'undefined') {
                     google.script.run.checkInStudent(student.StudentID, student.FullName);
                 }
             }
-
-            // ซ่อนหลังจาก 2 วินาที
-            setTimeout(() => { box.classList.add('hidden'); }, 2500);
+            setTimeout(() => { if (box) box.classList.add('hidden'); }, 2500);
         }
 
-        // Enrollment
         async function openStudentModal() {
             document.getElementById('modal-student').classList.add('show-modal');
             captureStep = 0; capturedImages = [null, null, null];
@@ -462,9 +495,11 @@
             const room = document.getElementById('std-room').value;
             if (!id || !name || !capturedImages[2]) return alert("ข้อมูลไม่ครบ");
             notify("Saving to Sheet...");
-            google.script.run.withSuccessHandler(res => {
-                if (res.success) { notify("Registered!"); closeModal('modal-student'); refreshData(); }
-            }).registerStudent({ id, name, room, faces: { front: capturedImages[0], left: capturedImages[1], right: capturedImages[2] } });
+            if (typeof google !== 'undefined') {
+                google.script.run.withSuccessHandler(res => {
+                    if (res.success) { notify("Registered!"); closeModal('modal-student'); refreshData(); }
+                }).registerStudent({ id, name, room, faces: { front: capturedImages[0], left: capturedImages[1], right: capturedImages[2] } });
+            }
         }
 
         function openSubjectModal() { document.getElementById('modal-subject').classList.add('show-modal'); }
@@ -472,7 +507,9 @@
             const id = document.getElementById('sub-id').value;
             const name = document.getElementById('sub-name').value;
             if (!id || !name) return alert("ข้อมูลไม่ครบ");
-            google.script.run.withSuccessHandler(() => { notify("Subject Added"); closeModal('modal-subject'); refreshData(); }).addSubject({id, name});
+            if (typeof google !== 'undefined') {
+                google.script.run.withSuccessHandler(() => { notify("Subject Added"); closeModal('modal-subject'); refreshData(); }).addSubject({id, name});
+            }
         }
 
         function closeModal(id) {
@@ -482,7 +519,9 @@
 
         function clearSheet(type) {
             if (!confirm(`Confirm to wipe all data in ${type}?`)) return;
-            google.script.run.withSuccessHandler(() => { notify("Wiped"); refreshData(); }).clearDatabase(type);
+            if (typeof google !== 'undefined') {
+                google.script.run.withSuccessHandler(() => { notify("Wiped"); refreshData(); }).clearDatabase(type);
+            }
         }
     </script>
 </body>
