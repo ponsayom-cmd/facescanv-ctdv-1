@@ -13,6 +13,16 @@
         .modal { display: none; position: fixed; inset: 0; z-index: 100; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(4px); align-items: center; justify-content: center; }
         .show-modal { display: flex; }
         .video-flip { transform: scaleX(-1); }
+        .scanning-frame {
+            border: 4px solid #3b82f6;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+            animation: pulse-frame 2s infinite;
+        }
+        @keyframes pulse-frame {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-700 h-screen flex overflow-hidden">
@@ -23,32 +33,32 @@
             <div class="bg-blue-600 p-2 rounded-xl text-white shadow-lg shadow-blue-500/30">
                 <i class="fas fa-id-badge fa-lg"></i>
             </div>
-            <h1 class="font-black text-white text-lg tracking-tighter italic uppercase">AI SCHOOL</h1>
+            <h1 class="font-black text-white text-lg tracking-tighter italic uppercase text-center">AI SCHOOL</h1>
         </div>
         
         <nav class="flex-1 space-y-2">
-            <button onclick="switchPage('dashboard')" id="nav-dashboard" class="nav-item w-full flex items-center gap-4 px-5 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active-nav">
+            <button onclick="switchPage('dashboard')" id="nav-dashboard" class="nav-item w-full flex items-center gap-4 px-5 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
                 <i class="fas fa-chart-line text-lg"></i> <span>Dashboard</span>
             </button>
-            <button onclick="switchPage('scan')" id="nav-scan" class="nav-item w-full flex items-center gap-4 px-5 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all hover:text-white hover:bg-slate-800">
+            <button onclick="switchPage('scan')" id="nav-scan" class="nav-item w-full flex items-center gap-4 px-5 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
                 <i class="fas fa-camera text-lg"></i> <span>AI Attendance</span>
             </button>
             <div class="h-px bg-slate-800 my-4"></div>
-            <button onclick="switchPage('subjects')" id="nav-subjects" class="nav-item w-full flex items-center gap-4 px-5 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all hover:text-white hover:bg-slate-800">
+            <button onclick="switchPage('subjects')" id="nav-subjects" class="nav-item w-full flex items-center gap-4 px-5 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
                 <i class="fas fa-book text-lg"></i> <span>รายวิชา</span>
             </button>
-            <button onclick="switchPage('students')" id="nav-students" class="nav-item w-full flex items-center gap-4 px-5 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all hover:text-white hover:bg-slate-800">
+            <button onclick="switchPage('students')" id="nav-students" class="nav-item w-full flex items-center gap-4 px-5 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
                 <i class="fas fa-users text-lg"></i> <span>นักศึกษา</span>
             </button>
-            <button onclick="switchPage('settings')" id="nav-settings" class="nav-item w-full flex items-center gap-4 px-5 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all hover:text-white hover:bg-slate-800">
+            <button onclick="switchPage('settings')" id="nav-settings" class="nav-item w-full flex items-center gap-4 px-5 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
                 <i class="fas fa-cogs text-lg"></i> <span>ระบบ Admin</span>
             </button>
         </nav>
 
-        <div class="mt-auto pt-4 border-t border-slate-800">
-            <div id="connection-status" class="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                Cloud Connected
+        <div class="mt-auto pt-4 border-t border-slate-800 text-center">
+            <div id="connection-status" class="flex items-center justify-center gap-2 text-[9px] font-bold uppercase tracking-widest text-slate-500">
+                <div id="status-dot" class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
+                <span id="status-text">Checking...</span>
             </div>
         </div>
     </aside>
@@ -56,14 +66,14 @@
     <!-- Main Content -->
     <main class="flex-1 flex flex-col overflow-hidden">
         <header class="h-16 bg-white border-b border-slate-200 px-8 flex items-center justify-between shrink-0">
-            <h2 id="page-title" class="font-black text-slate-800 uppercase italic text-sm tracking-widest underline decoration-blue-500 decoration-4 underline-offset-8">Dashboard</h2>
+            <h2 id="page-title" class="font-black text-slate-800 uppercase italic text-sm tracking-widest underline decoration-blue-500 decoration-4 underline-offset-8">DASHBOARD</h2>
             <button onclick="refreshData()" class="flex items-center gap-2 bg-slate-100 px-4 py-2 rounded-lg text-[10px] font-black uppercase hover:bg-slate-200 transition-all active:scale-95">
                 <i class="fas fa-sync-alt" id="refresh-icon"></i> Sync Sheet Data
             </button>
         </header>
 
-        <div id="content-area" class="flex-1 overflow-y-auto p-8">
-            <!-- Content will be injected here via JavaScript -->
+        <div id="content-area" class="flex-1 overflow-y-auto p-8 bg-slate-50/50">
+            <!-- Content Injected Here -->
         </div>
     </main>
 
@@ -73,9 +83,9 @@
             <div class="md:w-1/3 p-10 space-y-6 bg-slate-50 overflow-y-auto">
                 <h3 class="text-2xl font-black text-slate-900 italic uppercase">New Student</h3>
                 <div class="space-y-3">
-                    <input type="text" id="std-id" placeholder="รหัสนักศึกษา" class="w-full bg-white p-4 rounded-xl border border-slate-200 outline-none font-bold text-sm focus:ring-2 focus:ring-blue-100">
-                    <input type="text" id="std-name" placeholder="ชื่อ-นามสกุล" class="w-full bg-white p-4 rounded-xl border border-slate-200 outline-none font-bold text-sm focus:ring-2 focus:ring-blue-100">
-                    <input type="text" id="std-room" placeholder="ชั้นเรียน (เช่น IT-1)" class="w-full bg-white p-4 rounded-xl border border-slate-200 outline-none font-bold text-sm focus:ring-2 focus:ring-blue-100">
+                    <input type="text" id="std-id" placeholder="รหัสนักศึกษา" class="w-full bg-white p-4 rounded-xl border border-slate-200 outline-none font-bold text-sm">
+                    <input type="text" id="std-name" placeholder="ชื่อ-นามสกุล" class="w-full bg-white p-4 rounded-xl border border-slate-200 outline-none font-bold text-sm">
+                    <input type="text" id="std-room" placeholder="ชั้นเรียน (เช่น IT-1)" class="w-full bg-white p-4 rounded-xl border border-slate-200 outline-none font-bold text-sm">
                 </div>
                 <div class="grid grid-cols-3 gap-2 py-4">
                     <div id="view-0" class="aspect-square rounded-xl border-2 border-slate-200 bg-white flex items-center justify-center overflow-hidden"><span class="text-[8px] font-black text-slate-300 uppercase">หน้า</span></div>
@@ -83,19 +93,15 @@
                     <div id="view-2" class="aspect-square rounded-xl border-2 border-slate-200 bg-white flex items-center justify-center overflow-hidden"><span class="text-[8px] font-black text-slate-300 uppercase">ขวา</span></div>
                 </div>
                 <div class="space-y-2">
-                    <button onclick="saveStudent()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase text-xs tracking-widest shadow-xl shadow-blue-500/20 active:scale-95 transition-all">บันทึกลง Sheet</button>
+                    <button onclick="saveStudent()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase text-xs">บันทึกลงฐานข้อมูล</button>
                     <button onclick="closeModal('modal-student')" class="w-full text-slate-400 font-bold uppercase text-[9px]">ยกเลิก</button>
                 </div>
             </div>
             <div class="flex-1 bg-slate-900 p-8 flex flex-col items-center justify-center gap-6 relative">
-                <div class="w-full max-w-lg aspect-video bg-slate-800 rounded-[2rem] overflow-hidden border-4 border-slate-700 shadow-2xl relative">
-                    <video id="video" autoPlay playsInline muted class="w-full h-full object-cover video-flip"></video>
-                    <div id="step-label" class="absolute top-4 left-4 bg-blue-600 text-white px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest">
-                        ขั้นตอน: บันทึกใบหน้าด้านตรง
-                    </div>
-                </div>
-                <button onclick="captureImage()" class="w-20 h-20 bg-white rounded-full border-8 border-blue-600 shadow-2xl flex items-center justify-center active:scale-90 transition-all">
-                    <div class="w-12 h-12 bg-blue-600 rounded-full animate-pulse"></div>
+                <video id="video" autoPlay playsInline muted class="w-full max-w-lg aspect-video bg-slate-800 rounded-[2rem] object-cover video-flip border-4 border-slate-700"></video>
+                <div id="step-label" class="bg-blue-600 text-white px-4 py-1 rounded-full text-[10px] font-black uppercase">ขั้นตอน: บันทึกใบหน้าด้านตรง</div>
+                <button onclick="captureImage()" class="w-16 h-16 bg-white rounded-full border-4 border-blue-600 shadow-2xl flex items-center justify-center active:scale-90 transition-all">
+                    <div class="w-10 h-10 bg-blue-600 rounded-full"></div>
                 </button>
             </div>
         </div>
@@ -104,69 +110,81 @@
     <!-- Modal: Add Subject -->
     <div id="modal-subject" class="modal">
         <div class="bg-white w-full max-w-md rounded-[2.5rem] p-10 shadow-2xl">
-            <h3 class="text-xl font-black italic uppercase mb-6 text-slate-800">Add New Subject</h3>
+            <h3 class="text-xl font-black italic uppercase mb-6 text-slate-800">Add Subject</h3>
             <div class="space-y-4 mb-8">
-                <input type="text" id="sub-id" placeholder="รหัสวิชา (e.g. IT101)" class="w-full bg-slate-100 p-4 rounded-xl border-none outline-none font-bold text-sm focus:bg-white focus:ring-2 focus:ring-blue-100">
-                <input type="text" id="sub-name" placeholder="ชื่อวิชาเรียน" class="w-full bg-slate-100 p-4 rounded-xl border-none outline-none font-bold text-sm focus:bg-white focus:ring-2 focus:ring-blue-100">
+                <input type="text" id="sub-id" placeholder="รหัสวิชา" class="w-full bg-slate-100 p-4 rounded-xl border-none outline-none font-bold text-sm">
+                <input type="text" id="sub-name" placeholder="ชื่อวิชาเรียน" class="w-full bg-slate-100 p-4 rounded-xl border-none outline-none font-bold text-sm">
             </div>
             <div class="flex gap-3">
-                <button onclick="saveSubject()" class="flex-1 bg-emerald-500 text-white py-4 rounded-xl font-black uppercase text-xs shadow-lg shadow-emerald-500/20 active:scale-95 transition-all">Confirm Add</button>
+                <button onclick="saveSubject()" class="flex-1 bg-emerald-500 text-white py-4 rounded-xl font-black uppercase text-xs">Confirm</button>
                 <button onclick="closeModal('modal-subject')" class="flex-1 bg-slate-100 text-slate-400 py-4 rounded-xl font-black uppercase text-xs">Close</button>
             </div>
         </div>
     </div>
 
-    <!-- Toast Notification -->
-    <div id="toast" class="fixed top-10 left-1/2 -translate-x-1/2 z-[200] px-6 py-3 rounded-xl shadow-2xl font-bold text-white transition-all hidden animate-bounce"></div>
+    <div id="toast" class="fixed top-10 left-1/2 -translate-x-1/2 z-[200] px-6 py-3 rounded-xl shadow-2xl font-bold text-white transition-all hidden"></div>
 
     <script>
         let currentStudents = [];
         let currentSubjects = [];
+        let config = { ssId: "", scriptUrl: "" };
         let captureStep = 0;
         let capturedImages = [null, null, null];
         let stream = null;
+        let isAutoCheckIn = false;
+        let isScanning = false;
 
-        // Start Application
         window.onload = () => {
-            refreshData();
+            loadSettings();
             switchPage('dashboard');
         };
 
         function notify(msg, type = 'success') {
             const toast = document.getElementById('toast');
             toast.innerText = msg;
-            toast.className = `fixed top-10 left-1/2 -translate-x-1/2 z-[200] px-6 py-3 rounded-xl shadow-2xl font-bold text-white transition-all animate-bounce ${type === 'success' ? 'bg-emerald-500' : 'bg-rose-500'}`;
+            toast.className = `fixed top-10 left-1/2 -translate-x-1/2 z-[200] px-6 py-3 rounded-xl shadow-2xl font-bold text-white transition-all ${type === 'success' ? 'bg-emerald-500' : 'bg-rose-500'}`;
             toast.classList.remove('hidden');
             setTimeout(() => toast.classList.add('hidden'), 3000);
+        }
+
+        function loadSettings() {
+            if (typeof google !== 'undefined') {
+                google.script.run.withSuccessHandler(res => {
+                    config = res;
+                    const dot = document.getElementById('status-dot');
+                    const text = document.getElementById('status-text');
+                    if (res.ssId && res.scriptUrl) {
+                        text.innerText = "System Fully Linked";
+                        dot.className = "w-2 h-2 rounded-full bg-emerald-500 animate-pulse";
+                    } else {
+                        text.innerText = "Check Cloud Config";
+                        dot.className = "w-2 h-2 rounded-full bg-rose-500 animate-pulse";
+                    }
+                    refreshData();
+                }).getSettings();
+            }
         }
 
         async function refreshData() {
             const icon = document.getElementById('refresh-icon');
             icon.classList.add('fa-spin');
-
             if (typeof google !== 'undefined') {
                 google.script.run.withSuccessHandler(data => {
                     currentStudents = data || [];
                     updateUI();
                     icon.classList.remove('fa-spin');
                 }).getStudents();
-
                 google.script.run.withSuccessHandler(data => {
                     currentSubjects = data || [];
                     updateUI();
                 }).getSubjects();
             } else {
-                // Mock for local test preview
-                setTimeout(() => {
-                    currentStudents = [{StudentID: 'STD001', FullName: 'ระบบทดลอง ออฟไลน์', Room: 'IT-1'}];
-                    currentSubjects = [{id: 'SUB01', name: 'Computer Vision AI'}];
-                    updateUI();
-                    icon.classList.remove('fa-spin');
-                }, 1000);
+                setTimeout(() => icon.classList.remove('fa-spin'), 1000);
             }
         }
 
         function switchPage(page) {
+            stopScan();
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active-nav'));
             document.getElementById(`nav-${page}`).classList.add('active-nav');
             document.getElementById('page-title').innerText = page.toUpperCase();
@@ -177,71 +195,43 @@
             const area = document.getElementById('content-area');
             if (page === 'dashboard') {
                 area.innerHTML = `
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-in fade-in duration-500">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div class="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm relative overflow-hidden group">
-                            <i class="fas fa-user-graduate absolute -right-4 -bottom-4 text-slate-50 text-7xl group-hover:text-blue-50 transition-all"></i>
-                            <p class="text-[9px] font-black uppercase text-slate-400 tracking-[0.2em] relative z-10">นักศึกษาทั้งหมด</p>
+                            <i class="fas fa-user-graduate absolute -right-4 -bottom-4 text-slate-100 text-7xl"></i>
+                            <p class="text-[9px] font-black uppercase text-slate-400 tracking-widest relative z-10">Total Students</p>
                             <h3 class="text-4xl font-black text-blue-600 relative z-10">${currentStudents.length}</h3>
                         </div>
                         <div class="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm relative overflow-hidden group">
-                            <i class="fas fa-book-open absolute -right-4 -bottom-4 text-slate-50 text-7xl group-hover:text-indigo-50 transition-all"></i>
-                            <p class="text-[9px] font-black uppercase text-slate-400 tracking-[0.2em] relative z-10">รายวิชาเรียน</p>
+                            <i class="fas fa-book absolute -right-4 -bottom-4 text-slate-100 text-7xl"></i>
+                            <p class="text-[9px] font-black uppercase text-slate-400 tracking-widest relative z-10">Total Subjects</p>
                             <h3 class="text-4xl font-black text-indigo-600 relative z-10">${currentSubjects.length}</h3>
                         </div>
-                        <div class="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm border-l-4 border-l-emerald-500">
-                            <p class="text-[9px] font-black uppercase text-slate-400 tracking-[0.2em]">เช็คชื่อวันนี้</p>
-                            <h3 class="text-4xl font-black text-emerald-600">0</h3>
-                        </div>
-                    </div>
-                `;
-            } else if (page === 'scan') {
-                area.innerHTML = `
-                    <div class="max-w-4xl mx-auto flex flex-col items-center gap-8 py-10 animate-in zoom-in duration-500">
-                        <div class="text-center space-y-2">
-                            <h2 class="text-3xl font-black text-slate-900 uppercase italic">Face Recognition</h2>
-                            <p class="text-slate-500 font-bold uppercase text-[10px] tracking-[0.3em]">AI-Powered Attendance System</p>
-                        </div>
-                        <div class="w-full aspect-video bg-slate-900 rounded-[3rem] border-8 border-white shadow-2xl relative overflow-hidden flex items-center justify-center group">
-                            <i class="fas fa-camera text-slate-800 text-6xl"></i>
-                            <div class="absolute inset-0 bg-blue-500/5 animate-pulse"></div>
-                            <div class="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white/10 backdrop-blur-md px-6 py-2 rounded-full text-white font-black text-[10px] uppercase tracking-widest border border-white/20">
-                                System Standby
-                            </div>
-                        </div>
-                        <button class="bg-blue-600 text-white px-12 py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-blue-500/40 hover:scale-105 active:scale-95 transition-all">
-                           <i class="fas fa-play mr-2"></i> Start Scanning
-                        </button>
                     </div>
                 `;
             } else if (page === 'students') {
                 area.innerHTML = `
                     <div class="space-y-6">
                         <div class="flex justify-between items-center">
-                            <h3 class="font-black text-slate-800 uppercase italic">Registered Students</h3>
-                            <button onclick="openStudentModal()" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold text-xs flex items-center gap-2 shadow-lg shadow-blue-500/20 active:scale-95">
-                                <i class="fas fa-user-plus"></i> New Registration
-                            </button>
+                            <h3 class="font-black text-slate-800 italic uppercase">Students Registration</h3>
+                            <button onclick="openStudentModal()" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold text-xs active:scale-95 shadow-lg shadow-blue-500/20">Enroll Student</button>
                         </div>
-                        <div class="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="bg-white rounded-[2rem] border border-slate-200 overflow-hidden shadow-sm">
                             <table class="w-full text-left">
-                                <thead class="bg-slate-50 border-b border-slate-100">
+                                <thead class="bg-slate-50 border-b">
                                     <tr>
-                                        <th class="p-5 text-[10px] font-black uppercase text-slate-400 tracking-widest">Student ID</th>
-                                        <th class="p-5 text-[10px] font-black uppercase text-slate-400 tracking-widest">Full Name & Room</th>
-                                        <th class="p-5 text-[10px] font-black uppercase text-slate-400 text-right">Action</th>
+                                        <th class="p-5 text-[10px] font-black uppercase text-slate-400">ID</th>
+                                        <th class="p-5 text-[10px] font-black uppercase text-slate-400">Full Name & Class</th>
+                                        <th class="p-5 text-right text-[10px] font-black uppercase text-slate-400">Action</th>
                                     </tr>
                                 </thead>
-                                <tbody class="divide-y divide-slate-50">
+                                <tbody class="divide-y">
                                     ${currentStudents.map(s => `
-                                        <tr class="hover:bg-slate-50/50 transition-all">
-                                            <td class="p-5 font-bold text-blue-600 tracking-tighter">#${s.StudentID}</td>
-                                            <td class="p-5 font-black uppercase text-slate-700">${s.FullName} <span class="text-slate-300 mx-2">|</span> <span class="text-slate-400 font-bold">${s.Room}</span></td>
-                                            <td class="p-5 text-right">
-                                                <button class="text-slate-200 hover:text-rose-500 transition-colors p-2"><i class="fas fa-trash-alt"></i></button>
-                                            </td>
+                                        <tr class="hover:bg-slate-50 transition-colors">
+                                            <td class="p-5 font-bold text-blue-600">#${s.StudentID}</td>
+                                            <td class="p-5 font-black uppercase">${s.FullName} (${s.Room})</td>
+                                            <td class="p-5 text-right"><button class="text-slate-300 hover:text-rose-500"><i class="fas fa-trash"></i></button></td>
                                         </tr>
                                     `).join('')}
-                                    ${currentStudents.length === 0 ? '<tr><td colspan="3" class="p-16 text-center text-slate-400 font-black italic uppercase tracking-widest">Empty Dataset</td></tr>' : ''}
                                 </tbody>
                             </table>
                         </div>
@@ -251,49 +241,81 @@
                 area.innerHTML = `
                     <div class="space-y-6">
                         <div class="flex justify-between items-center">
-                            <h3 class="font-black text-slate-800 uppercase italic">Subject Management</h3>
-                            <button onclick="openSubjectModal()" class="bg-emerald-500 text-white px-6 py-3 rounded-xl font-bold text-xs flex items-center gap-2 shadow-lg shadow-emerald-500/20 active:scale-95">
-                                <i class="fas fa-plus"></i> Add Subject
-                            </button>
+                            <h3 class="font-black text-slate-800 italic uppercase">Subjects Management</h3>
+                            <button onclick="openSubjectModal()" class="bg-emerald-500 text-white px-6 py-3 rounded-xl font-bold text-xs active:scale-95 shadow-lg shadow-emerald-500/20">Add New Subject</button>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                             ${currentSubjects.map(sub => `
-                                <div class="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm group hover:border-blue-500 transition-all flex justify-between items-start">
-                                    <div class="space-y-1">
-                                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">${sub.id}</p>
-                                        <h4 class="text-lg font-black text-slate-800 uppercase leading-tight">${sub.name}</h4>
-                                    </div>
-                                    <div class="bg-slate-50 p-3 rounded-xl text-slate-200 group-hover:text-blue-500 group-hover:bg-blue-50 transition-all">
-                                        <i class="fas fa-book"></i>
-                                    </div>
+                                <div class="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm flex justify-between items-center group hover:border-blue-500 transition-all cursor-pointer">
+                                    <div><p class="text-[9px] font-black text-slate-400 uppercase">${sub.id}</p><h4 class="text-lg font-black uppercase tracking-tight">${sub.name}</h4></div>
+                                    <div class="bg-blue-50 p-4 rounded-xl text-blue-500 group-hover:bg-blue-500 group-hover:text-white transition-all"><i class="fas fa-book"></i></div>
                                 </div>
                             `).join('')}
-                            ${currentSubjects.length === 0 ? '<div class="col-span-full py-20 text-center font-black text-slate-200 uppercase tracking-widest italic text-2xl">No Subjects Defined</div>' : ''}
+                        </div>
+                    </div>
+                `;
+            } else if (page === 'scan') {
+                area.innerHTML = `
+                    <div class="max-w-4xl mx-auto flex flex-col items-center gap-8 py-4">
+                        <div class="flex items-center gap-10 bg-white px-8 py-4 rounded-[2rem] border border-slate-200 shadow-sm w-full justify-center">
+                            <div class="flex items-center gap-3">
+                                <span class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Auto Check-in</span>
+                                <button onclick="toggleAutoCheckIn()" id="btn-autocheck" class="w-14 h-8 bg-slate-200 rounded-full p-1 transition-all relative">
+                                    <div class="w-6 h-6 bg-white rounded-full shadow-md transition-all translate-x-0"></div>
+                                </button>
+                            </div>
+                            <div class="w-px h-8 bg-slate-200"></div>
+                            <p id="scan-status" class="text-[10px] font-black uppercase text-slate-400">Camera: Ready</p>
+                        </div>
+
+                        <div class="w-full aspect-video bg-slate-900 rounded-[3rem] border-[12px] border-white shadow-2xl relative overflow-hidden group">
+                            <video id="scan-video" autoPlay playsInline muted class="w-full h-full object-cover video-flip"></video>
+                            
+                            <!-- AI Overlay Layer -->
+                            <div id="ai-overlay" class="absolute inset-0 pointer-events-none flex items-center justify-center">
+                                <!-- Example Frame (Hidden by default) -->
+                                <div id="face-box" class="hidden absolute border-4 border-blue-500 rounded-2xl scanning-frame transition-all duration-300">
+                                    <div class="absolute -top-12 left-0 bg-blue-600 text-white px-4 py-1.5 rounded-xl text-xs font-black uppercase whitespace-nowrap shadow-xl">
+                                        <span id="detected-name">Identifying...</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="camera-placeholder" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 text-slate-700">
+                                <i class="fas fa-camera-retro text-7xl mb-4"></i>
+                                <span class="font-black uppercase text-xs tracking-[0.3em]">Standby</span>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-4">
+                            <button id="btn-scan-start" onclick="startScan()" class="bg-blue-600 text-white px-10 py-5 rounded-2xl font-black uppercase text-xs shadow-xl shadow-blue-500/30 hover:scale-105 active:scale-95 transition-all">Start Scanning</button>
+                            <button id="btn-scan-stop" onclick="stopScan()" class="hidden bg-rose-500 text-white px-10 py-5 rounded-2xl font-black uppercase text-xs shadow-xl shadow-rose-500/30 active:scale-95 transition-all">Stop Camera</button>
                         </div>
                     </div>
                 `;
             } else if (page === 'settings') {
                 area.innerHTML = `
-                    <div class="max-w-xl space-y-6 animate-in slide-in-from-bottom duration-500">
+                    <div class="max-w-3xl space-y-6">
                         <div class="bg-white p-10 rounded-[2.5rem] border border-slate-200 shadow-sm">
-                            <h3 class="font-black uppercase italic mb-8 flex items-center gap-3 text-slate-800">
-                                <i class="fas fa-database text-blue-500"></i> Database Wipe Tools
-                            </h3>
-                            <div class="space-y-4">
-                                <div class="flex items-center justify-between p-5 bg-slate-50 rounded-2xl border border-slate-100">
-                                    <div>
-                                        <p class="font-black text-slate-800 text-sm">Students Database</p>
-                                        <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">ล้างข้อมูลนักศึกษาทั้งหมด</p>
-                                    </div>
-                                    <button onclick="clearSheet('Students')" class="bg-rose-100 text-rose-500 px-5 py-2.5 rounded-xl text-[9px] font-black uppercase hover:bg-rose-500 hover:text-white transition-all">Clear</button>
+                            <h3 class="font-black uppercase italic mb-8 flex items-center gap-3"><i class="fas fa-cogs text-blue-500"></i> Cloud Infrastructure</h3>
+                            <div class="space-y-6">
+                                <div class="space-y-2">
+                                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">1. Google Spreadsheet ID</p>
+                                    <input type="text" id="input-ssid" value="${config.ssId}" placeholder="ระบุ ID ของ Google Sheet" class="w-full bg-slate-100 p-4 rounded-xl outline-none font-bold text-sm focus:bg-white focus:ring-2 focus:ring-blue-100">
                                 </div>
-                                <div class="flex items-center justify-between p-5 bg-slate-50 rounded-2xl border border-slate-100">
-                                    <div>
-                                        <p class="font-black text-slate-800 text-sm">Subjects Database</p>
-                                        <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">ล้างข้อมูลรายวิชาทั้งหมด</p>
-                                    </div>
-                                    <button onclick="clearSheet('Subjects')" class="bg-rose-100 text-rose-500 px-5 py-2.5 rounded-xl text-[9px] font-black uppercase hover:bg-rose-500 hover:text-white transition-all">Clear</button>
+                                <div class="space-y-2">
+                                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">2. Google Apps Script URL</p>
+                                    <input type="text" id="input-scripturl" value="${config.scriptUrl}" placeholder="วาง Web App URL ของคุณ" class="w-full bg-slate-100 p-4 rounded-xl outline-none font-bold text-sm focus:bg-white focus:ring-2 focus:ring-blue-100">
                                 </div>
+                                <button onclick="updateSettings()" class="bg-blue-600 text-white w-full py-4 rounded-xl font-black uppercase text-xs shadow-lg shadow-blue-500/20 active:scale-95 transition-all">Save Cloud Configuration</button>
+                            </div>
+                        </div>
+                        <div class="bg-white p-10 rounded-[2.5rem] border border-slate-200 shadow-sm">
+                            <h3 class="font-black uppercase italic mb-8 flex items-center gap-3 text-rose-500"><i class="fas fa-exclamation-triangle"></i> Database Management</h3>
+                            <div class="grid grid-cols-3 gap-4">
+                                <button onclick="clearSheet('Students')" class="bg-rose-50 text-rose-500 p-4 rounded-2xl font-black uppercase text-[10px] hover:bg-rose-500 hover:text-white transition-all">Wipe Students</button>
+                                <button onclick="clearSheet('Subjects')" class="bg-rose-50 text-rose-500 p-4 rounded-2xl font-black uppercase text-[10px] hover:bg-rose-500 hover:text-white transition-all">Wipe Subjects</button>
+                                <button onclick="clearSheet('Attendance')" class="bg-rose-50 text-rose-500 p-4 rounded-2xl font-black uppercase text-[10px] hover:bg-rose-500 hover:text-white transition-all">Wipe History</button>
                             </div>
                         </div>
                     </div>
@@ -302,50 +324,135 @@
         }
 
         function updateUI() {
-            const currentTitle = document.getElementById('page-title').innerText.toLowerCase();
-            renderPage(currentTitle);
+            const page = document.getElementById('page-title').innerText.toLowerCase();
+            renderPage(page);
         }
 
-        // Student Enrollment Functions
+        function updateSettings() {
+            const id = document.getElementById('input-ssid').value;
+            const url = document.getElementById('input-scripturl').value;
+            if (!id || !url) return alert("กรุณาระบุข้อมูลให้ครบถ้วน");
+            notify("Connecting to Cloud...");
+            google.script.run.withSuccessHandler(res => {
+                if (res.success) { notify("Cloud Linked!"); loadSettings(); } else { notify(res.message, "error"); }
+            }).saveSettings(id, url);
+        }
+
+        // AI Scan & Face Recognition Logic (Simulation)
+        async function startScan() {
+            const video = document.getElementById('scan-video');
+            const placeholder = document.getElementById('camera-placeholder');
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+                placeholder.classList.add('hidden');
+                document.getElementById('btn-scan-start').classList.add('hidden');
+                document.getElementById('btn-scan-stop').classList.remove('hidden');
+                document.getElementById('scan-status').innerText = "Camera: Active / AI Running";
+                isScanning = true;
+                simulationAI(); // เริ่มตัวจำลอง AI
+            } catch (err) { alert("Camera Error: " + err); }
+        }
+
+        function stopScan() {
+            isScanning = false;
+            const video = document.getElementById('scan-video');
+            if (stream) stream.getTracks().forEach(t => t.stop());
+            if (video) video.srcObject = null;
+            const placeholder = document.getElementById('camera-placeholder');
+            if (placeholder) placeholder.classList.remove('hidden');
+            const box = document.getElementById('face-box');
+            if (box) box.classList.add('hidden');
+            
+            const btnStart = document.getElementById('btn-scan-start');
+            const btnStop = document.getElementById('btn-scan-stop');
+            if (btnStart) btnStart.classList.remove('hidden');
+            if (btnStop) btnStop.classList.add('hidden');
+        }
+
+        function toggleAutoCheckIn() {
+            isAutoCheckIn = !isAutoCheckIn;
+            const btn = document.getElementById('btn-autocheck');
+            const dot = btn.querySelector('div');
+            if (isAutoCheckIn) {
+                btn.classList.replace('bg-slate-200', 'bg-emerald-500');
+                dot.classList.replace('translate-x-0', 'translate-x-6');
+                notify("Auto Check-in Enabled");
+            } else {
+                btn.classList.replace('bg-emerald-500', 'bg-slate-200');
+                dot.classList.replace('translate-x-6', 'translate-x-0');
+                notify("Auto Check-in Disabled", "error");
+            }
+        }
+
+        // จำลองการทำงานของ AI เมื่อตรวจจับใบหน้า
+        function simulationAI() {
+            if (!isScanning) return;
+            
+            // สุ่มเวลาตรวจเจอใบหน้า (จำลอง)
+            setTimeout(() => {
+                if (!isScanning) return;
+                
+                // สุ่มนักเรียนจากข้อมูลที่มี
+                if (currentStudents.length > 0) {
+                    const randomStd = currentStudents[Math.floor(Math.random() * currentStudents.length)];
+                    showFaceDetection(randomStd);
+                } else {
+                    showFaceDetection({ FullName: "Unknown User", StudentID: "????" });
+                }
+
+                // รันต่อเรื่อยๆ (จำลอง Loop)
+                setTimeout(simulationAI, 4000);
+            }, 3000);
+        }
+
+        function showFaceDetection(student) {
+            const box = document.getElementById('face-box');
+            const nameLabel = document.getElementById('detected-name');
+            
+            // แสดงกรอบสแกน
+            box.classList.remove('hidden');
+            box.style.width = "200px";
+            box.style.height = "240px";
+            nameLabel.innerText = student.FullName;
+
+            // หากเปิด Auto Check-in และมีข้อมูลจริง
+            if (isAutoCheckIn && student.StudentID !== "????") {
+                notify(`Checking-in: ${student.FullName}`);
+                if (typeof google !== 'undefined') {
+                    google.script.run.checkInStudent(student.StudentID, student.FullName);
+                }
+            }
+
+            // ซ่อนหลังจาก 2 วินาที
+            setTimeout(() => { box.classList.add('hidden'); }, 2500);
+        }
+
+        // Enrollment
         async function openStudentModal() {
             document.getElementById('modal-student').classList.add('show-modal');
-            captureStep = 0;
-            capturedImages = [null, null, null];
-            document.getElementById('step-label').innerText = "ขั้นตอน: บันทึกใบหน้าด้านตรง";
-            for(let i=0; i<3; i++) document.getElementById(`view-${i}`).innerHTML = `<span class="text-[8px] font-black text-slate-300 uppercase">${['หน้า','ซ้าย','ขวา'][i]}</span>`;
-            
+            captureStep = 0; capturedImages = [null, null, null];
             try {
                 stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 document.getElementById('video').srcObject = stream;
-            } catch (err) {
-                alert("Access Denied: ไม่สามารถเปิดกล้องได้");
-            }
+            } catch (err) { alert("Camera denied"); }
         }
 
         function captureImage() {
             if (captureStep > 2) return;
             const video = document.getElementById('video');
             const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
+            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
             const ctx = canvas.getContext('2d');
-            
-            // Flip horizontal to match video preview
-            ctx.translate(canvas.width, 0);
-            ctx.scale(-1, 1);
+            ctx.translate(canvas.width, 0); ctx.scale(-1, 1);
             ctx.drawImage(video, 0, 0);
-            
             const data = canvas.toDataURL('image/jpeg', 0.6);
             capturedImages[captureStep] = data;
-            
             document.getElementById(`view-${captureStep}`).innerHTML = `<img src="${data}" class="w-full h-full object-cover">`;
-            
             captureStep++;
             if (captureStep <= 2) {
-                const labels = ["ตรง", "ซ้าย", "ขวา"];
+                const labels = ["หน้า", "ซ้าย", "ขวา"];
                 document.getElementById('step-label').innerText = "ขั้นตอน: บันทึกใบหน้าด้าน" + labels[captureStep];
-            } else {
-                document.getElementById('step-label').innerText = "ใบหน้าครบ 3 มุมเรียบร้อยแล้ว";
             }
         }
 
@@ -353,72 +460,29 @@
             const id = document.getElementById('std-id').value;
             const name = document.getElementById('std-name').value;
             const room = document.getElementById('std-room').value;
-
-            if (!id || !name || !capturedImages[2]) {
-                return alert("กรุณากรอกข้อมูลและบันทึกใบหน้าให้ครบ 3 มุม");
-            }
-
-            const payload = {
-                id, name, room,
-                faces: { front: capturedImages[0], left: capturedImages[1], right: capturedImages[2] }
-            };
-
-            notify("Saving to Google Cloud...");
-            if (typeof google !== 'undefined') {
-                google.script.run.withSuccessHandler(res => {
-                    if (res.success) {
-                        notify("Student Registered Successfully!");
-                        closeModal('modal-student');
-                        refreshData();
-                        document.getElementById('std-id').value = '';
-                        document.getElementById('std-name').value = '';
-                        document.getElementById('std-room').value = '';
-                    } else {
-                        notify("Error: " + res.message, "error");
-                    }
-                }).registerStudent(payload);
-            }
+            if (!id || !name || !capturedImages[2]) return alert("ข้อมูลไม่ครบ");
+            notify("Saving to Sheet...");
+            google.script.run.withSuccessHandler(res => {
+                if (res.success) { notify("Registered!"); closeModal('modal-student'); refreshData(); }
+            }).registerStudent({ id, name, room, faces: { front: capturedImages[0], left: capturedImages[1], right: capturedImages[2] } });
         }
 
-        // Subject Functions
-        function openSubjectModal() {
-            document.getElementById('modal-subject').classList.add('show-modal');
-        }
-
+        function openSubjectModal() { document.getElementById('modal-subject').classList.add('show-modal'); }
         function saveSubject() {
             const id = document.getElementById('sub-id').value;
             const name = document.getElementById('sub-name').value;
-            if (!id || !name) return alert("กรุณากรอกข้อมูลให้ครบ");
-
-            notify("Adding Subject...");
-            if (typeof google !== 'undefined') {
-                google.script.run.withSuccessHandler(() => {
-                    notify("Subject Added!");
-                    closeModal('modal-subject');
-                    refreshData();
-                    document.getElementById('sub-id').value = '';
-                    document.getElementById('sub-name').value = '';
-                }).addSubject({id, name});
-            }
+            if (!id || !name) return alert("ข้อมูลไม่ครบ");
+            google.script.run.withSuccessHandler(() => { notify("Subject Added"); closeModal('modal-subject'); refreshData(); }).addSubject({id, name});
         }
 
         function closeModal(id) {
             document.getElementById(id).classList.remove('show-modal');
-            if (id === 'modal-student' && stream) {
-                stream.getTracks().forEach(t => t.stop());
-                stream = null;
-            }
+            if (stream) stream.getTracks().forEach(t => t.stop());
         }
 
         function clearSheet(type) {
-            if (!confirm(`ยืนยันการลบข้อมูลในตาราง ${type} ทั้งหมด? การกระทำนี้ไม่สามารถย้อนกลับได้`)) return;
-            notify(`Clearing ${type}...`);
-            if (typeof google !== 'undefined') {
-                google.script.run.withSuccessHandler(() => {
-                    notify(`${type} Database Wiped.`);
-                    refreshData();
-                }).clearDatabase(type);
-            }
+            if (!confirm(`Confirm to wipe all data in ${type}?`)) return;
+            google.script.run.withSuccessHandler(() => { notify("Wiped"); refreshData(); }).clearDatabase(type);
         }
     </script>
 </body>
