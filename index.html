@@ -1,355 +1,205 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart School AI System</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; }
-        .active-nav { background: white; color: #2563eb; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
-        .modal { display: none; position: fixed; inset: 0; z-index: 100; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(4px); align-items: center; justify-content: center; }
-        .show-modal { display: flex; }
-        .video-flip { transform: scaleX(-1); }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ระบบสแกนใบหน้าเข้าชั้นเรียน</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <script src="js/api-config.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Sarabun', sans-serif;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #0d1b2a 100%);
+      color: #e2e8f0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px 60px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Ambient orbs */
+    body::before, body::after {
+      content: '';
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.15;
+      pointer-events: none;
+      z-index: 0;
+    }
+    body::before {
+      width: 400px; height: 400px;
+      background: #6366f1;
+      top: -100px; left: -100px;
+    }
+    body::after {
+      width: 350px; height: 350px;
+      background: #10b981;
+      bottom: -80px; right: -80px;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+      position: relative; z-index: 1;
+      animation: fadeInDown 0.6s ease;
+    }
+    .logo-icon {
+      font-size: 52px;
+      display: block;
+      margin-bottom: 12px;
+      filter: drop-shadow(0 0 20px rgba(99,102,241,0.6));
+    }
+    h1 {
+      font-size: 1.7em;
+      font-weight: 700;
+      background: linear-gradient(135deg, #a5b4fc, #e2e8f0);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 6px;
+    }
+    .subtitle {
+      font-size: 0.85em;
+      color: #64748b;
+      letter-spacing: 0.03em;
+    }
+
+    /* Warning */
+    .api-warning {
+      display: none;
+      background: rgba(245,158,11,0.15);
+      border: 1px solid rgba(245,158,11,0.4);
+      color: #fcd34d;
+      border-radius: 12px;
+      padding: 12px 18px;
+      width: 100%;
+      max-width: 360px;
+      margin-bottom: 20px;
+      font-size: 0.88em;
+      position: relative; z-index: 1;
+      animation: fadeIn 0.5s ease;
+    }
+    .api-warning a { color: #fbbf24; font-weight: 600; text-decoration: none; }
+
+    /* Menu Cards */
+    .menu-cards {
+      width: 100%;
+      max-width: 380px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      position: relative; z-index: 1;
+    }
+
+    .btn-menu {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 20px 22px;
+      text-decoration: none;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      color: #e2e8f0;
+      transition: all 0.3s ease;
+      animation: fadeInUp 0.5s ease both;
+    }
+    .btn-menu:nth-child(1) { animation-delay: 0.1s; }
+    .btn-menu:nth-child(2) { animation-delay: 0.2s; }
+    .btn-menu:nth-child(3) { animation-delay: 0.3s; }
+
+    .btn-menu:hover {
+      transform: translateY(-4px);
+      background: rgba(255,255,255,0.1);
+      border-color: rgba(255,255,255,0.25);
+    }
+
+    .btn-register:hover { box-shadow: 0 8px 30px rgba(99,102,241,0.35); border-color: rgba(99,102,241,0.5); }
+    .btn-scan:hover     { box-shadow: 0 8px 30px rgba(16,185,129,0.35); border-color: rgba(16,185,129,0.5); }
+    .btn-config:hover   { box-shadow: 0 8px 30px rgba(100,116,139,0.25); border-color: rgba(148,163,184,0.4); }
+
+    .card-icon {
+      width: 52px; height: 52px;
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+    .btn-register .card-icon { background: linear-gradient(135deg, #6366f1, #4f46e5); box-shadow: 0 4px 15px rgba(99,102,241,0.4); }
+    .btn-scan     .card-icon { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 15px rgba(16,185,129,0.4); }
+    .btn-config   .card-icon { background: linear-gradient(135deg, #475569, #334155); box-shadow: 0 4px 15px rgba(71,85,105,0.4); }
+
+    .card-text { flex: 1; text-align: left; }
+    .card-title { font-size: 1.05em; font-weight: 600; color: #f1f5f9; margin-bottom: 2px; }
+    .card-desc  { font-size: 0.8em; color: #64748b; }
+
+    .card-arrow {
+      font-size: 18px; color: #475569;
+      transition: transform 0.3s ease, color 0.3s ease;
+    }
+    .btn-menu:hover .card-arrow { transform: translateX(4px); color: #94a3b8; }
+
+    /* Animations */
+    @keyframes fadeIn    { from { opacity: 0; }                      to { opacity: 1; } }
+    @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeInUp  { from { opacity: 0; transform: translateY(20px);  } to { opacity: 1; transform: translateY(0); } }
+  </style>
 </head>
-<body class="bg-slate-50 text-slate-700 h-screen flex overflow-hidden">
+<body>
 
-    <!-- Sidebar -->
-    <aside class="w-64 bg-slate-900 text-slate-400 flex flex-col p-6 shrink-0 shadow-xl">
-        <div class="flex items-center gap-3 mb-10">
-            <div class="bg-blue-600 p-2 rounded-xl text-white shadow-lg">
-                <i class="fas fa-id-badge fa-lg"></i>
-            </div>
-            <h1 class="font-black text-white text-lg tracking-tighter italic uppercase">AI SCHOOL</h1>
-        </div>
-        
-        <nav class="flex-1 space-y-2">
-            <button onclick="switchPage('dashboard')" id="nav-dashboard" class="nav-item w-full flex items-center gap-4 px-5 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
-                <i class="fas fa-chart-line text-lg"></i> <span>Dashboard</span>
-            </button>
-            <button onclick="switchPage('scan')" id="nav-scan" class="nav-item w-full flex items-center gap-4 px-5 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
-                <i class="fas fa-camera text-lg"></i> <span>AI Attendance</span>
-            </button>
-            <div class="h-px bg-slate-800 my-4"></div>
-            <button onclick="switchPage('students')" id="nav-students" class="nav-item w-full flex items-center gap-4 px-5 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
-                <i class="fas fa-users text-lg"></i> <span>นักศึกษา</span>
-            </button>
-            <button onclick="switchPage('settings')" id="nav-settings" class="nav-item w-full flex items-center gap-4 px-5 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
-                <i class="fas fa-cogs text-lg"></i> <span>ระบบ Admin</span>
-            </button>
-        </nav>
+  <div class="header">
+    <span class="logo-icon">🏢</span>
+    <h1>ระบบสแกนใบหน้าเข้าชั้นเรียน</h1>
+    <p class="subtitle">Face Recognition &amp; GPS Attendance</p>
+  </div>
 
-        <div class="mt-auto pt-4 border-t border-slate-800 text-center">
-            <div id="connection-status" class="flex items-center justify-center gap-2 text-[9px] font-bold uppercase tracking-widest text-slate-500">
-                <div id="status-dot" class="w-2 h-2 rounded-full bg-slate-600"></div>
-                <span id="status-text">Disconnected</span>
-            </div>
-        </div>
-    </aside>
+  <div id="apiWarning" class="api-warning">
+    ⚠️ ยังไม่ได้ตั้งค่า API —
+    <a href="config.html">ไปตั้งค่าก่อน</a>
+  </div>
 
-    <!-- Main Content -->
-    <main class="flex-1 flex flex-col overflow-hidden">
-        <header class="h-16 bg-white border-b border-slate-200 px-8 flex items-center justify-between shrink-0">
-            <h2 id="page-title" class="font-black text-slate-800 uppercase italic text-sm tracking-widest">DASHBOARD</h2>
-            <button onclick="refreshData()" class="flex items-center gap-2 bg-slate-100 px-4 py-2 rounded-lg text-[10px] font-black uppercase hover:bg-slate-200 transition-all">
-                <i class="fas fa-sync-alt" id="refresh-icon"></i> Sync Data
-            </button>
-        </header>
+  <div class="menu-cards">
+    <a href="register.html" class="btn-menu btn-register">
+      <div class="card-icon">👤</div>
+      <div class="card-text">
+        <div class="card-title">ลงทะเบียนนักศึกษา</div>
+        <div class="card-desc">บันทึกข้อมูลใบหน้าใหม่</div>
+      </div>
+      <span class="card-arrow">›</span>
+    </a>
 
-        <div id="content-area" class="flex-1 overflow-y-auto p-8">
-            <!-- Dynamic Content -->
-        </div>
-    </main>
+    <a href="scan.html" class="btn-menu btn-scan">
+      <div class="card-icon">📷</div>
+      <div class="card-text">
+        <div class="card-title">สแกนใบหน้าเข้าเรียน</div>
+        <div class="card-desc">ยืนยันตัวตนด้วยใบหน้า + GPS</div>
+      </div>
+      <span class="card-arrow">›</span>
+    </a>
 
-    <!-- Registration Modal -->
-    <div id="modal-student" class="modal">
-        <div class="bg-white w-full max-w-4xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col md:flex-row">
-            <div class="md:w-1/3 p-10 space-y-6 bg-slate-50">
-                <h3 class="text-xl font-black italic uppercase">New Student</h3>
-                <div class="space-y-3">
-                    <input type="text" id="std-id" placeholder="รหัสนักศึกษา" class="w-full p-4 rounded-xl border border-slate-200 outline-none text-sm font-bold">
-                    <input type="text" id="std-name" placeholder="ชื่อ-นามสกุล" class="w-full p-4 rounded-xl border border-slate-200 outline-none text-sm font-bold">
-                    <input type="text" id="std-room" placeholder="ชั้นเรียน" class="w-full p-4 rounded-xl border border-slate-200 outline-none text-sm font-bold">
-                </div>
-                <div id="capture-preview" class="aspect-video bg-white border-2 border-dashed rounded-xl flex items-center justify-center text-[10px] font-bold text-slate-300 overflow-hidden">
-                    FACE PREVIEW
-                </div>
-                <button onclick="saveStudent()" id="btn-save-std" class="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase text-xs shadow-lg active:scale-95 transition-all">บันทึกข้อมูล</button>
-                <button onclick="closeModal('modal-student')" class="w-full text-slate-400 font-bold text-[9px] uppercase">ยกเลิก</button>
-            </div>
-            <div class="flex-1 bg-slate-900 p-8 flex flex-col items-center justify-center gap-4">
-                <video id="video" autoPlay playsInline muted class="w-full max-w-md aspect-video bg-slate-800 rounded-2xl object-cover video-flip border-4 border-slate-700"></video>
-                <button onclick="captureImage()" class="w-20 h-20 bg-white rounded-full border-4 border-blue-600 flex items-center justify-center active:scale-90 transition-all shadow-2xl shadow-blue-500/50">
-                    <div class="w-14 h-14 bg-blue-600 rounded-full flex items-center justify-center text-white italic font-black text-xs uppercase">Snap</div>
-                </button>
-            </div>
-        </div>
-    </div>
+    <a href="config.html" class="btn-menu btn-config">
+      <div class="card-icon">⚙️</div>
+      <div class="card-text">
+        <div class="card-title">ตั้งค่าระบบ</div>
+        <div class="card-desc">จัดการ GPS และ API (Admin)</div>
+      </div>
+      <span class="card-arrow">›</span>
+    </a>
+  </div>
 
-    <!-- Toast -->
-    <div id="toast" class="fixed top-10 left-1/2 -translate-x-1/2 z-[200] px-6 py-3 rounded-xl shadow-2xl font-bold text-white hidden"></div>
-
-    <script>
-        // --- System State ---
-        let currentStudents = [];
-        let config = {
-            scriptUrl: localStorage.getItem('ai_school_script_url') || "",
-            isLocal: typeof google === 'undefined'
-        };
-        let capturedImage = null;
-        let stream = null;
-
-        window.onload = () => {
-            initSystem();
-            switchPage('dashboard');
-        };
-
-        function initSystem() {
-            const dot = document.getElementById('status-dot');
-            const text = document.getElementById('status-text');
-
-            if (!config.isLocal) {
-                // Running inside Google Apps Script
-                dot.className = "w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]";
-                text.innerText = "Internal Mode (GAS)";
-                refreshData();
-            } else if (config.scriptUrl) {
-                // Running outside but has Script URL
-                dot.className = "w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)] animate-pulse";
-                text.innerText = "External Mode (API)";
-                refreshData();
-            } else {
-                // No connection
-                dot.className = "w-2 h-2 rounded-full bg-amber-500";
-                text.innerText = "Offline / Demo";
-                renderCurrentPage();
-            }
-        }
-
-        // --- Communication Layer (THE EASY CONNECT WAY) ---
-        async function callServer(functionName, data = null) {
-            // Priority 1: Native GAS Call
-            if (!config.isLocal) {
-                return new Promise((resolve, reject) => {
-                    google.script.run
-                        .withSuccessHandler(resolve)
-                        .withFailureHandler(reject)[functionName](data);
-                });
-            }
-
-            // Priority 2: External Fetch via Script URL
-            if (config.scriptUrl) {
-                try {
-                    const response = await fetch(config.scriptUrl, {
-                        method: 'POST',
-                        mode: 'no-cors', // Needs to be handled on GS side with doPost
-                        body: JSON.stringify({ action: functionName, payload: data })
-                    });
-                    // Note: with 'no-cors', we can't read the response directly, 
-                    // but for saving data, it works fine.
-                    return { success: true, note: "Sent via Web App URL" };
-                } catch (e) {
-                    console.error("Fetch Error:", e);
-                    throw e;
-                }
-            }
-
-            // Fallback: Local Storage for Demo
-            console.warn("Using Local Fallback");
-            return null;
-        }
-
-        function refreshData() {
-            const icon = document.getElementById('refresh-icon');
-            if (icon) icon.classList.add('fa-spin');
-
-            if (!config.isLocal) {
-                google.script.run.withSuccessHandler(data => {
-                    currentStudents = data || [];
-                    renderCurrentPage();
-                    if (icon) icon.classList.remove('fa-spin');
-                }).getStudents();
-            } else {
-                // If External Mode, we might need a GET handler or just mock for now
-                currentStudents = JSON.parse(localStorage.getItem('demo_students') || '[]');
-                setTimeout(() => {
-                    renderCurrentPage();
-                    if (icon) icon.classList.remove('fa-spin');
-                }, 800);
-            }
-        }
-
-        // --- UI Rendering ---
-        function switchPage(page) {
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active-nav'));
-            const btn = document.getElementById(`nav-${page}`);
-            if (btn) btn.classList.add('active-nav');
-            document.getElementById('page-title').innerText = page.toUpperCase();
-            renderPage(page);
-        }
-
-        function renderCurrentPage() {
-            const activeNav = document.querySelector('.active-nav');
-            if (activeNav) renderPage(activeNav.id.replace('nav-', ''));
-        }
-
-        function renderPage(page) {
-            const area = document.getElementById('content-area');
-            if (page === 'dashboard') {
-                area.innerHTML = `
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="bg-white p-10 rounded-[2.5rem] border border-slate-200 shadow-sm relative overflow-hidden group">
-                            <i class="fas fa-user-graduate absolute -right-6 -bottom-6 text-slate-100 text-8xl transition-transform group-hover:scale-110"></i>
-                            <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest relative z-10 mb-2">Total Students</p>
-                            <h3 class="text-5xl font-black text-blue-600 relative z-10 tracking-tighter">${currentStudents.length}</h3>
-                        </div>
-                        <div class="bg-white p-10 rounded-[2.5rem] border border-slate-200 shadow-sm relative overflow-hidden group">
-                            <i class="fas fa-network-wired absolute -right-6 -bottom-6 text-slate-100 text-8xl transition-transform group-hover:scale-110"></i>
-                            <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest relative z-10 mb-2">API Connection</p>
-                            <h3 class="text-xl font-black ${config.scriptUrl || !config.isLocal ? 'text-emerald-500' : 'text-amber-500'} relative z-10 uppercase italic">
-                                ${!config.isLocal ? 'Internal Linked' : (config.scriptUrl ? 'External Ready' : 'Stand-Alone')}
-                            </h3>
-                        </div>
-                    </div>
-                `;
-            } else if (page === 'students') {
-                area.innerHTML = `
-                    <div class="space-y-6">
-                        <div class="flex justify-between items-center">
-                            <h3 class="font-black italic uppercase text-slate-800 tracking-tight">Student Database</h3>
-                            <button onclick="openStudentModal()" class="bg-blue-600 text-white px-8 py-3.5 rounded-2xl font-black text-[10px] uppercase shadow-xl shadow-blue-500/30 hover:-translate-y-1 transition-all">Add Student</button>
-                        </div>
-                        <div class="bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-sm">
-                            <table class="w-full text-left">
-                                <thead class="bg-slate-50/50 border-b border-slate-100">
-                                    <tr>
-                                        <th class="p-6 text-[10px] font-black uppercase text-slate-400">ID</th>
-                                        <th class="p-6 text-[10px] font-black uppercase text-slate-400">Full Name</th>
-                                        <th class="p-6 text-[10px] font-black uppercase text-slate-400">Class</th>
-                                        <th class="p-6 text-right text-[10px] font-black uppercase text-slate-400">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-slate-100">
-                                    ${currentStudents.length === 0 ? '<tr><td colspan="4" class="p-10 text-center text-slate-300 font-bold uppercase italic text-xs">No Data Found</td></tr>' : ''}
-                                    ${currentStudents.map(s => `
-                                        <tr class="hover:bg-slate-50/80 transition-colors">
-                                            <td class="p-6 font-bold text-blue-600 tracking-tight">#${s.StudentID}</td>
-                                            <td class="p-6 font-black uppercase text-slate-800">${s.FullName}</td>
-                                            <td class="p-6 font-bold text-slate-500">${s.Room}</td>
-                                            <td class="p-6 text-right"><i class="fas fa-check-circle text-emerald-500"></i></td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                `;
-            } else if (page === 'settings') {
-                area.innerHTML = `
-                    <div class="max-w-2xl space-y-6">
-                        <div class="bg-white p-10 rounded-[3rem] border border-slate-200 shadow-sm">
-                            <h3 class="font-black italic uppercase mb-8 flex items-center gap-4 text-slate-800">
-                                <span class="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center"><i class="fas fa-bolt"></i></span>
-                                Smart Connect
-                            </h3>
-                            <div class="space-y-6">
-                                <div>
-                                    <label class="text-[10px] font-black uppercase text-slate-400 mb-3 block tracking-widest">Google Script Web App URL</label>
-                                    <input type="text" id="admin-url" value="${config.scriptUrl}" placeholder="https://script.google.com/macros/s/.../exec" 
-                                           class="w-full bg-slate-50 border border-slate-200 p-5 rounded-2xl font-bold text-sm outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all">
-                                </div>
-                                <div class="bg-amber-50 border border-amber-100 p-6 rounded-2xl flex gap-4">
-                                    <i class="fas fa-info-circle text-amber-500 text-xl"></i>
-                                    <div class="text-[11px] font-bold text-amber-700 leading-relaxed uppercase">
-                                        วาง URL ที่ได้จากการ "Deploy as Web App" เพื่อให้ระบบสามารถบันทึกข้อมูลลง Google Sheet ได้แม้จะไม่ได้รันจากในสคริปต์
-                                    </div>
-                                </div>
-                                <button onclick="saveAdminSettings()" class="w-full bg-slate-900 text-white py-5 rounded-2xl font-black uppercase text-xs shadow-2xl hover:bg-black transition-all active:scale-95">Update Configuration</button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-        }
-
-        // --- Logic Functions ---
-        function saveAdminSettings() {
-            const url = document.getElementById('admin-url').value;
-            localStorage.setItem('ai_school_script_url', url);
-            config.scriptUrl = url;
-            notify("Configuration Updated Successfully!");
-            initSystem();
-        }
-
-        async function openStudentModal() {
-            document.getElementById('modal-student').classList.add('show-modal');
-            capturedImage = null;
-            document.getElementById('capture-preview').innerHTML = "FACE PREVIEW";
-            try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                document.getElementById('video').srcObject = stream;
-            } catch (err) { notify("Camera access denied", "error"); }
-        }
-
-        function captureImage() {
-            const video = document.getElementById('video');
-            const canvas = document.createElement('canvas');
-            canvas.width = 320; canvas.height = 240;
-            const ctx = canvas.getContext('2d');
-            ctx.translate(canvas.width, 0); ctx.scale(-1, 1);
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            capturedImage = canvas.toDataURL('image/jpeg', 0.5);
-            document.getElementById('capture-preview').innerHTML = `<img src="${capturedImage}" class="w-full h-full object-cover">`;
-            notify("Face Captured!");
-        }
-
-        async function saveStudent() {
-            const id = document.getElementById('std-id').value;
-            const name = document.getElementById('std-name').value;
-            const room = document.getElementById('std-room').value;
-            const btn = document.getElementById('btn-save-std');
-
-            if (!id || !name || !capturedImage) return notify("Missing information", "error");
-
-            btn.disabled = true;
-            btn.innerText = "UPLOADING...";
-
-            try {
-                await callServer('registerStudent', { id, name, room, faceData: capturedImage });
-                
-                // If it's local mode, we manually add to demo list too
-                if (config.isLocal && !config.scriptUrl) {
-                    let demo = JSON.parse(localStorage.getItem('demo_students') || '[]');
-                    demo.push({ StudentID: id, FullName: name, Room: room });
-                    localStorage.setItem('demo_students', JSON.stringify(demo));
-                }
-
-                notify("Successfully Registered!");
-                closeModal('modal-student');
-                refreshData();
-            } catch (e) {
-                notify("Save failed: Check Web App URL", "error");
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "บันทึกข้อมูล";
-            }
-        }
-
-        function closeModal(id) {
-            document.getElementById(id).classList.remove('show-modal');
-            if (stream) stream.getTracks().forEach(t => t.stop());
-        }
-
-        function notify(msg, type = 'success') {
-            const toast = document.getElementById('toast');
-            toast.innerText = msg;
-            toast.className = `fixed top-10 left-1/2 -translate-x-1/2 z-[200] px-8 py-4 rounded-2xl shadow-2xl font-black uppercase text-[10px] tracking-widest text-white transition-all ${type === 'success' ? 'bg-emerald-500' : 'bg-rose-500'}`;
-            toast.classList.remove('hidden');
-            setTimeout(() => toast.classList.add('hidden'), 3000);
-        }
-    </script>
+  <script>
+    if (!localStorage.getItem('gasApiUrl') && typeof GAS_API_URL === 'undefined') {
+      document.getElementById('apiWarning').style.display = 'block';
+    }
+  </script>
 </body>
 </html>
